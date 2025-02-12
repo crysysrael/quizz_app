@@ -1,50 +1,88 @@
 import 'package:flutter/material.dart';
 import 'category_selection_screen.dart';
 
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
+
+  @override
+  _WelcomeScreenState createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  bool _isPressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    );
+
+    _fadeAnimation =
+        CurvedAnimation(parent: _animationController, curve: Curves.easeIn);
+
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Bem-vindo ao Quiz Scratch!',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const CategorySelectionScreen()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF6AB3C),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+      backgroundColor: const Color(0xFFF6AB3C), // 🔥 Cor de fundo mantida
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Center(
+          child: GestureDetector(
+            onTapDown: (_) {
+              setState(() => _isPressed = true);
+            },
+            onTapUp: (_) {
+              setState(() => _isPressed = false);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CategorySelectionScreen(),
                 ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-              ),
-              child: const Text(
-                'Escolher Categoria',
-                style: TextStyle(fontSize: 18),
+              );
+            },
+            child: AnimatedScale(
+              scale: _isPressed ? 0.95 : 1.0, // 🔥 Efeito de clique
+              duration: const Duration(milliseconds: 150),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // 🔥 Logo do Quiz - Agora maior (150 de altura)
+                  Image.asset(
+                    'assets/images/scratch_logo.png',
+                    height: 150,
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // 🔥 Nome do App
+                  const Text(
+                    'LÓGICA MENTEE',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 1.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

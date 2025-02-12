@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/question_model.dart';
 import '../screens/result_screen.dart';
-import '../main.dart'; // 🔥 Importa o arquivo onde a chave global foi definida
+import '../main.dart'; // 🔥 Importa a chave global de navegação
 
 class QuizController extends ChangeNotifier {
   int _currentQuestionIndex = 0;
@@ -10,9 +10,8 @@ class QuizController extends ChangeNotifier {
   int wrongAnswers = 0;
   final Stopwatch _stopwatch = Stopwatch();
   Timer? _countdownTimer;
-  int _remainingTime = 10; // ⏳ Tempo inicial para cada pergunta
-  bool _countdownEnabled =
-      false; // 🔥 Flag para ativar/desativar a contagem regressiva
+  int _remainingTime = 10;
+  bool _countdownEnabled = false;
 
   // 🔥 Mapa de perguntas organizadas por categoria
   final Map<String, List<Question>> _questionsByCategory = {
@@ -35,8 +34,6 @@ class QuizController extends ChangeNotifier {
         category: "Introdução ao Scratch",
       ),
     ],
-
-    // 🔥 Categoria com alternativas em IMAGENS
     "Blocos de Código": [
       Question(
         questionText: "Qual desses blocos inicia um programa no Scratch?",
@@ -109,7 +106,7 @@ class QuizController extends ChangeNotifier {
 
   // 🚨 Se o tempo acabar, conta como erro e avança para a próxima pergunta
   void _handleTimeout() {
-    wrongAnswers++; // Conta como erro se o tempo acabar
+    wrongAnswers++;
 
     if (_currentQuestionIndex < _questions.length - 1) {
       _currentQuestionIndex++;
@@ -152,13 +149,30 @@ class QuizController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // 🔄 Redireciona para a tela de resultados
+  // 🔄 Redireciona para a tela de resultados com transição suave
   void _goToResultScreen() {
-    navigatorKey.currentState?.pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => ResultScreen(quizController: this),
-      ),
-    );
+    navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) =>
+          ResultScreen(quizController: this),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(0.0, 1.0);
+        const end = Offset.zero;
+        const curve = Curves.easeInOut;
+
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var fadeTween =
+            Tween<double>(begin: 0.0, end: 1.0).chain(CurveTween(curve: curve));
+
+        return FadeTransition(
+          opacity: animation.drive(fadeTween),
+          child: SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          ),
+        );
+      },
+    ));
   }
 
   // 🔄 Reinicia o quiz
