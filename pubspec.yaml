@@ -1,0 +1,36 @@
+name: quizz_app
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  path_provider: ^2.1.5
+  provider: ^6.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  # 🔥 Adicionando imagens dos blocos do Scratch
+  assets:
+    - assets/images/bloco_inicio.png
+    - assets/images/bloco_repetir.png
+    - assets/images/bloco_movimento.png
+    - assets/images/bloco_som.png
+    - assets/images/puzzle_1.png
+    - assets/images/puzzle_2.png
+    - assets/images/puzzle_3.png
+    - assets/images/puzzle_4.png
+    - assets/images/puzzle_5.png
