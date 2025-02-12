@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/question_model.dart';
 import '../screens/result_screen.dart';
+import '../main.dart'; // 🔥 Importa o arquivo onde a chave global foi definida
 
 class QuizController extends ChangeNotifier {
   int _currentQuestionIndex = 0;
@@ -93,21 +94,23 @@ class QuizController extends ChangeNotifier {
 
   // ⏳ Inicia a contagem regressiva
   void _startCountdown() {
-    _remainingTime = 10; // 🔥 Define tempo de cada pergunta
-    _countdownTimer?.cancel(); // Cancela qualquer contagem anterior
+    _remainingTime = 10;
+    _countdownTimer?.cancel();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_remainingTime > 0) {
         _remainingTime--;
       } else {
         timer.cancel();
-        _autoSkipQuestion();
+        _handleTimeout();
       }
       notifyListeners();
     });
   }
 
-  // 🔄 Passa para a próxima pergunta automaticamente
-  void _autoSkipQuestion() {
+  // 🚨 Se o tempo acabar, conta como erro e avança para a próxima pergunta
+  void _handleTimeout() {
+    wrongAnswers++; // Conta como erro se o tempo acabar
+
     if (_currentQuestionIndex < _questions.length - 1) {
       _currentQuestionIndex++;
       _remainingTime = 10;
@@ -115,7 +118,7 @@ class QuizController extends ChangeNotifier {
     } else {
       _stopwatch.stop();
       _countdownTimer?.cancel();
-      notifyListeners();
+      _goToResultScreen();
     }
     notifyListeners();
   }
@@ -123,7 +126,7 @@ class QuizController extends ChangeNotifier {
   // ✅ Responde a pergunta manualmente
   void answerQuestion(int selectedIndex, BuildContext context) {
     _stopwatch.stop();
-    _countdownTimer?.cancel(); // 🔥 Para o tempo assim que o usuário responde
+    _countdownTimer?.cancel();
 
     int timeTaken = _stopwatch.elapsedMilliseconds;
     if (_questions.isNotEmpty) {
@@ -143,15 +146,19 @@ class QuizController extends ChangeNotifier {
       if (_countdownEnabled) _startCountdown();
     } else {
       _stopwatch.stop();
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ResultScreen(quizController: this),
-        ),
-      );
+      _goToResultScreen();
     }
 
     notifyListeners();
+  }
+
+  // 🔄 Redireciona para a tela de resultados
+  void _goToResultScreen() {
+    navigatorKey.currentState?.pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => ResultScreen(quizController: this),
+      ),
+    );
   }
 
   // 🔄 Reinicia o quiz

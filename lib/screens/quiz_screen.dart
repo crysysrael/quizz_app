@@ -10,7 +10,7 @@ class QuizScreen extends StatefulWidget {
 }
 
 class _QuizScreenState extends State<QuizScreen> {
-  int? selectedAnswerIndex;
+  int? selectedAnswerIndex; // 🔥 Mantém a opção selecionada por pergunta
 
   @override
   Widget build(BuildContext context) {
@@ -117,6 +117,10 @@ class _QuizScreenState extends State<QuizScreen> {
                     });
                     Future.delayed(const Duration(milliseconds: 500), () {
                       quizController.answerQuestion(index, context);
+                      setState(() {
+                        selectedAnswerIndex =
+                            null; // 🔥 Reseta a seleção na próxima pergunta
+                      });
                     });
                   },
                   child: Container(
@@ -135,7 +139,7 @@ class _QuizScreenState extends State<QuizScreen> {
                     ),
                     child: Image.asset(
                       question.imageOptions![index],
-                      height: 100, // 🔥 Tamanho do bloco de imagem
+                      height: 100,
                     ),
                   ),
                 );
@@ -151,6 +155,10 @@ class _QuizScreenState extends State<QuizScreen> {
                     });
                     Future.delayed(const Duration(milliseconds: 500), () {
                       quizController.answerQuestion(index, context);
+                      setState(() {
+                        selectedAnswerIndex =
+                            null; // 🔥 Reseta a seleção na próxima pergunta
+                      });
                     });
                   },
                   child: Container(

@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 import 'controllers/quiz_controller.dart';
 import 'screens/welcome_screen.dart';
 
+// 🔥 Definindo a chave global para navegação
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
   runApp(
     MultiProvider(
       providers: [
@@ -21,6 +23,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey, // 🔥 Adicionando a chave de navegação
       debugShowCheckedModeBanner: false,
       title: 'Quiz App',
       theme: ThemeData(primarySwatch: Colors.blue),
