@@ -13,8 +13,7 @@ class CategorySelectionScreen extends StatefulWidget {
 
 class _CategorySelectionScreenState extends State<CategorySelectionScreen>
     with SingleTickerProviderStateMixin {
-  bool isCountdownEnabled =
-      false; // 🔥 Flag para ativar/desativar contagem regressiva
+  bool isCountdownEnabled = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -88,8 +87,6 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
                         Navigator.push(
                           context,
                           PageRouteBuilder(
-                            transitionDuration:
-                                const Duration(milliseconds: 500),
                             pageBuilder:
                                 (context, animation, secondaryAnimation) =>
                                     const QuizScreen(),
@@ -103,15 +100,17 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
 
                               return SlideTransition(
                                 position: animation.drive(tween),
-                                child: child,
+                                child: FadeTransition(
+                                  opacity: animation,
+                                  child: child,
+                                ),
                               );
                             },
                           ),
                         );
                       },
                       child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeOut,
+                        duration: const Duration(milliseconds: 200),
                         margin: const EdgeInsets.symmetric(vertical: 8),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -127,16 +126,14 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
                             )
                           ],
                         ),
-                        child: Center(
-                          child: Text(
-                            category,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFFF6AB3C),
-                            ),
-                            textAlign: TextAlign.center,
+                        child: Text(
+                          category,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFF6AB3C),
                           ),
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     );

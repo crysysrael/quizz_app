@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../controllers/quiz_controller.dart';
 
 class QuizScreen extends StatefulWidget {
@@ -9,8 +10,38 @@ class QuizScreen extends StatefulWidget {
   _QuizScreenState createState() => _QuizScreenState();
 }
 
-class _QuizScreenState extends State<QuizScreen> {
-  int? selectedAnswerIndex; // 🔥 Mantém a opção selecionada por pergunta
+class _QuizScreenState extends State<QuizScreen>
+    with SingleTickerProviderStateMixin {
+  int? selectedAnswerIndex;
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+      lowerBound: 0.8,
+      upperBound: 1.0,
+    );
+    _scaleAnimation =
+        CurvedAnimation(parent: _animationController, curve: Curves.easeInOut);
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  void _playSound(bool isCorrect) {
+    String soundPath =
+        isCorrect ? "assets/sounds/correct.mp3" : "assets/sounds/wrong.mp3";
+    _audioPlayer.play(AssetSource(soundPath));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,9 +84,8 @@ class _QuizScreenState extends State<QuizScreen> {
               child: LinearProgressIndicator(
                 value: progress.isFinite ? progress : 0.0,
                 backgroundColor: Colors.grey[300],
-                valueColor: const AlwaysStoppedAnimation<Color>(
-                  Color(0xFFF6AB3C),
-                ),
+                valueColor:
+                    const AlwaysStoppedAnimation<Color>(Color(0xFFF6AB3C)),
               ),
             ),
             const SizedBox(height: 20),
@@ -96,10 +126,9 @@ class _QuizScreenState extends State<QuizScreen> {
               child: Text(
                 question.questionText,
                 style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -115,31 +144,40 @@ class _QuizScreenState extends State<QuizScreen> {
                     setState(() {
                       selectedAnswerIndex = index;
                     });
+                    _playSound(index == question.correctIndex);
+                    _animationController.forward().then((_) {
+                      _animationController.reverse();
+                    });
+
                     Future.delayed(const Duration(milliseconds: 500), () {
                       quizController.answerQuestion(index, context);
                       setState(() {
-                        selectedAnswerIndex =
-                            null; // 🔥 Reseta a seleção na próxima pergunta
+                        selectedAnswerIndex = null;
                       });
                     });
                   },
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isSelected ? Colors.greenAccent : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 6,
-                          spreadRadius: 2,
-                        )
-                      ],
-                    ),
-                    child: Image.asset(
-                      question.imageOptions![index],
-                      height: 100,
+                  child: ScaleTransition(
+                    scale: isSelected
+                        ? _scaleAnimation
+                        : AlwaysStoppedAnimation(1.0),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isSelected ? Colors.greenAccent : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 6,
+                            spreadRadius: 2,
+                          )
+                        ],
+                      ),
+                      child: Image.asset(
+                        question.imageOptions![index],
+                        height: 100,
+                      ),
                     ),
                   ),
                 );
@@ -153,41 +191,50 @@ class _QuizScreenState extends State<QuizScreen> {
                     setState(() {
                       selectedAnswerIndex = index;
                     });
+                    _playSound(isCorrect);
+                    _animationController.forward().then((_) {
+                      _animationController.reverse();
+                    });
+
                     Future.delayed(const Duration(milliseconds: 500), () {
                       quizController.answerQuestion(index, context);
                       setState(() {
-                        selectedAnswerIndex =
-                            null; // 🔥 Reseta a seleção na próxima pergunta
+                        selectedAnswerIndex = null;
                       });
                     });
                   },
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? (isCorrect ? Colors.green : Colors.redAccent)
-                          : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
+                  child: ScaleTransition(
+                    scale: isSelected
+                        ? _scaleAnimation
+                        : AlwaysStoppedAnimation(1.0),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
                         color: isSelected
-                            ? (isCorrect ? Colors.green : Colors.red)
-                            : Colors.grey,
-                        width: 2,
+                            ? (isCorrect ? Colors.green : Colors.redAccent)
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected
+                              ? (isCorrect ? Colors.green : Colors.red)
+                              : Colors.grey,
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 6,
+                            spreadRadius: 2,
+                          )
+                        ],
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 6,
-                          spreadRadius: 2,
-                        )
-                      ],
-                    ),
-                    child: Text(
-                      question.options![index],
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
+                      child: Text(
+                        question.options![index],
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
                 );

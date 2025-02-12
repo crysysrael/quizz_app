@@ -37,7 +37,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6AB3C), // 🔥 Cor de fundo mantida
+      backgroundColor: const Color(0xFFF6AB3C), // 🔥 Mantendo a paleta de cores
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: Center(
@@ -49,8 +49,25 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               setState(() => _isPressed = false);
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const CategorySelectionScreen(),
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      const CategorySelectionScreen(),
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) {
+                    const begin = Offset(0.0, 1.0);
+                    const end = Offset.zero;
+                    const curve = Curves.easeInOut;
+                    var tween = Tween(begin: begin, end: end)
+                        .chain(CurveTween(curve: curve));
+
+                    return SlideTransition(
+                      position: animation.drive(tween),
+                      child: FadeTransition(
+                        opacity: animation,
+                        child: child,
+                      ),
+                    );
+                  },
                 ),
               );
             },
