@@ -15,9 +15,23 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   Widget build(BuildContext context) {
     final quizController = Provider.of<QuizController>(context);
+
+    if (quizController.questions.isEmpty) {
+      return const Scaffold(
+        body: Center(
+          child: Text(
+            "Nenhuma pergunta carregada!",
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+        ),
+      );
+    }
+
     final question = quizController.currentQuestion;
-    double progress = (quizController.currentQuestionIndex + 1) /
-        quizController.questions.length;
+    double progress = quizController.questions.isNotEmpty
+        ? (quizController.currentQuestionIndex + 1) /
+            quizController.questions.length
+        : 0.0;
 
     return Scaffold(
       appBar: AppBar(
@@ -33,11 +47,11 @@ class _QuizScreenState extends State<QuizScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 🔥 Barra de progresso
+            // 🔥 Barra de progresso geral das perguntas
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: LinearProgressIndicator(
-                value: progress,
+                value: progress.isFinite ? progress : 0.0,
                 backgroundColor: Colors.grey[300],
                 valueColor: const AlwaysStoppedAnimation<Color>(
                   Color(0xFFF6AB3C),
@@ -45,6 +59,25 @@ class _QuizScreenState extends State<QuizScreen> {
               ),
             ),
             const SizedBox(height: 20),
+
+            // 🔥 Exibe a contagem regressiva se estiver ativada
+            if (quizController.isCountdownEnabled)
+              Column(
+                children: [
+                  Text(
+                    "Tempo restante: ${quizController.remainingTime}s",
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 5),
+                  LinearProgressIndicator(
+                    value: quizController.remainingTime / 10,
+                    backgroundColor: Colors.grey[300],
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.red),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
 
             // 🔥 Pergunta (Card estilizado)
             Container(
@@ -102,12 +135,12 @@ class _QuizScreenState extends State<QuizScreen> {
                     ),
                     child: Image.asset(
                       question.imageOptions![index],
-                      height: 100, // Tamanho do bloco
+                      height: 100, // 🔥 Tamanho do bloco de imagem
                     ),
                   ),
                 );
               })
-            else
+            else if (question.options != null && question.options!.isNotEmpty)
               ...List.generate(question.options!.length, (index) {
                 bool isSelected = selectedAnswerIndex == index;
                 bool isCorrect = index == question.correctIndex;

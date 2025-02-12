@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/question_model.dart';
 import '../screens/result_screen.dart';
@@ -7,6 +8,10 @@ class QuizController extends ChangeNotifier {
   int correctAnswers = 0;
   int wrongAnswers = 0;
   final Stopwatch _stopwatch = Stopwatch();
+  Timer? _countdownTimer;
+  int _remainingTime = 10; // ⏳ Tempo inicial para cada pergunta
+  bool _countdownEnabled =
+      false; // 🔥 Flag para ativar/desativar a contagem regressiva
 
   // 🔥 Mapa de perguntas organizadas por categoria
   final Map<String, List<Question>> _questionsByCategory = {
@@ -58,30 +63,72 @@ class QuizController extends ChangeNotifier {
   };
 
   List<Question> _questions = [];
-  String _selectedCategory = "Introdução ao Scratch"; // Categoria padrão
 
-  // 🔥 Getter público para acessar as categorias
+  // 🔥 Getters
   Map<String, List<Question>> get questionsByCategory => _questionsByCategory;
-
   List<Question> get questions => _questions;
   int get currentQuestionIndex => _currentQuestionIndex;
-  Question get currentQuestion => _questions[_currentQuestionIndex];
+  int get remainingTime => _remainingTime;
+  bool get isCountdownEnabled => _countdownEnabled;
+  Question get currentQuestion => _questions.isNotEmpty
+      ? _questions[_currentQuestionIndex]
+      : Question(questionText: "", options: [], correctIndex: 0, category: "");
 
-  void startQuiz(String category) {
-    _selectedCategory = category;
+  // 🔥 Inicia o quiz
+  void startQuiz(String category, bool enableCountdown) {
+    _countdownEnabled = enableCountdown;
     _questions = _questionsByCategory[category] ?? [];
     _currentQuestionIndex = 0;
     correctAnswers = 0;
     wrongAnswers = 0;
     _stopwatch.reset();
     _stopwatch.start();
+
+    if (_countdownEnabled) {
+      _startCountdown();
+    }
+
     notifyListeners();
   }
 
+  // ⏳ Inicia a contagem regressiva
+  void _startCountdown() {
+    _remainingTime = 10; // 🔥 Define tempo de cada pergunta
+    _countdownTimer?.cancel(); // Cancela qualquer contagem anterior
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_remainingTime > 0) {
+        _remainingTime--;
+      } else {
+        timer.cancel();
+        _autoSkipQuestion();
+      }
+      notifyListeners();
+    });
+  }
+
+  // 🔄 Passa para a próxima pergunta automaticamente
+  void _autoSkipQuestion() {
+    if (_currentQuestionIndex < _questions.length - 1) {
+      _currentQuestionIndex++;
+      _remainingTime = 10;
+      _startCountdown();
+    } else {
+      _stopwatch.stop();
+      _countdownTimer?.cancel();
+      notifyListeners();
+    }
+    notifyListeners();
+  }
+
+  // ✅ Responde a pergunta manualmente
   void answerQuestion(int selectedIndex, BuildContext context) {
     _stopwatch.stop();
+    _countdownTimer?.cancel(); // 🔥 Para o tempo assim que o usuário responde
+
     int timeTaken = _stopwatch.elapsedMilliseconds;
-    _questions[_currentQuestionIndex].timeSpent = timeTaken;
+    if (_questions.isNotEmpty) {
+      _questions[_currentQuestionIndex].timeSpent = timeTaken;
+    }
 
     if (selectedIndex == _questions[_currentQuestionIndex].correctIndex) {
       correctAnswers++;
@@ -93,22 +140,26 @@ class QuizController extends ChangeNotifier {
       _currentQuestionIndex++;
       _stopwatch.reset();
       _stopwatch.start();
+      if (_countdownEnabled) _startCountdown();
     } else {
       _stopwatch.stop();
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-            builder: (context) => ResultScreen(quizController: this)),
+          builder: (context) => ResultScreen(quizController: this),
+        ),
       );
     }
 
     notifyListeners();
   }
 
+  // 🔄 Reinicia o quiz
   void resetQuiz() {
     _currentQuestionIndex = 0;
     correctAnswers = 0;
     wrongAnswers = 0;
+    _countdownTimer?.cancel();
     for (var question in _questions) {
       question.timeSpent = null;
     }
