@@ -47,8 +47,7 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
           "Escolha uma Categoria",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor:
-            const Color(0xFFF6AB3C), // 🔥 Mantendo a identidade visual
+        backgroundColor: const Color(0xFFF6AB3C),
         elevation: 2,
       ),
       body: FadeTransition(
@@ -89,6 +88,8 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
                         Navigator.push(
                           context,
                           PageRouteBuilder(
+                            transitionDuration:
+                                const Duration(milliseconds: 500),
                             pageBuilder:
                                 (context, animation, secondaryAnimation) =>
                                     const QuizScreen(),
@@ -109,7 +110,8 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
                         );
                       },
                       child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
                         margin: const EdgeInsets.symmetric(vertical: 8),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -125,14 +127,16 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
                             )
                           ],
                         ),
-                        child: Text(
-                          category,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFF6AB3C),
+                        child: Center(
+                          child: Text(
+                            category,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFF6AB3C),
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
                         ),
                       ),
                     );

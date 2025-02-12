@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../models/question_model.dart';
 import '../screens/result_screen.dart';
 import '../main.dart'; // 🔥 Importa a chave global de navegação
@@ -13,7 +14,8 @@ class QuizController extends ChangeNotifier {
   int _remainingTime = 10;
   bool _countdownEnabled = false;
 
-  // 🔥 Mapa de perguntas organizadas por categoria
+  final AudioPlayer _audioPlayer = AudioPlayer(); // 🎵 Para tocar os sons
+
   final Map<String, List<Question>> _questionsByCategory = {
     "Introdução ao Scratch": [
       Question(
@@ -62,7 +64,6 @@ class QuizController extends ChangeNotifier {
 
   List<Question> _questions = [];
 
-  // 🔥 Getters
   Map<String, List<Question>> get questionsByCategory => _questionsByCategory;
   List<Question> get questions => _questions;
   int get currentQuestionIndex => _currentQuestionIndex;
@@ -72,7 +73,6 @@ class QuizController extends ChangeNotifier {
       ? _questions[_currentQuestionIndex]
       : Question(questionText: "", options: [], correctIndex: 0, category: "");
 
-  // 🔥 Inicia o quiz
   void startQuiz(String category, bool enableCountdown) {
     _countdownEnabled = enableCountdown;
     _questions = _questionsByCategory[category] ?? [];
@@ -89,7 +89,6 @@ class QuizController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ⏳ Inicia a contagem regressiva
   void _startCountdown() {
     _remainingTime = 10;
     _countdownTimer?.cancel();
@@ -104,9 +103,10 @@ class QuizController extends ChangeNotifier {
     });
   }
 
-  // 🚨 Se o tempo acabar, conta como erro e avança para a próxima pergunta
-  void _handleTimeout() {
+  void _handleTimeout() async {
     wrongAnswers++;
+    await _playSound(
+        "sounds/wrong.mp3"); // 🎵 Toca som de erro ao zerar o tempo
 
     if (_currentQuestionIndex < _questions.length - 1) {
       _currentQuestionIndex++;
@@ -120,8 +120,7 @@ class QuizController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ Responde a pergunta manualmente
-  void answerQuestion(int selectedIndex, BuildContext context) {
+  void answerQuestion(int selectedIndex, BuildContext context) async {
     _stopwatch.stop();
     _countdownTimer?.cancel();
 
@@ -130,10 +129,13 @@ class QuizController extends ChangeNotifier {
       _questions[_currentQuestionIndex].timeSpent = timeTaken;
     }
 
+    // 🎵 Toca o som de acerto ou erro
     if (selectedIndex == _questions[_currentQuestionIndex].correctIndex) {
       correctAnswers++;
+      await _playSound("sounds/correct.mp3");
     } else {
       wrongAnswers++;
+      await _playSound("sounds/wrong.mp3");
     }
 
     if (_currentQuestionIndex < _questions.length - 1) {
@@ -149,7 +151,14 @@ class QuizController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // 🔄 Redireciona para a tela de resultados com transição suave
+  Future<void> _playSound(String path) async {
+    try {
+      await _audioPlayer.play(AssetSource(path));
+    } catch (e) {
+      print("Erro ao reproduzir som: $e");
+    }
+  }
+
   void _goToResultScreen() {
     navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) =>
@@ -175,7 +184,6 @@ class QuizController extends ChangeNotifier {
     ));
   }
 
-  // 🔄 Reinicia o quiz
   void resetQuiz() {
     _currentQuestionIndex = 0;
     correctAnswers = 0;

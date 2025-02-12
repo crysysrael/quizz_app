@@ -16,6 +16,7 @@ dependencies:
   path_provider: ^2.1.5
   provider: ^6.1.2
   syncfusion_flutter_charts: ^28.2.5+1
+  audioplayers: ^6.1.2
 
 dev_dependencies:
   flutter_test:
@@ -37,3 +38,5 @@ flutter:
     - assets/images/puzzle_4.png
     - assets/images/puzzle_5.png
     - assets/images/scratch_logo.png
+    - assets/sounds/correct.mp3
+    - assets/sounds/wrong.mp3
