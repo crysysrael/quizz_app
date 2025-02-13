@@ -9,6 +9,7 @@ class QuizController extends ChangeNotifier {
   int _currentQuestionIndex = 0;
   int correctAnswers = 0;
   int wrongAnswers = 0;
+  String selectedAgeGroup = ""; // 🔥 Adiciona faixa etária do usuário
   final Stopwatch _stopwatch = Stopwatch();
   Timer? _countdownTimer;
   int _remainingTime = 10;
@@ -69,16 +70,20 @@ class QuizController extends ChangeNotifier {
   int get currentQuestionIndex => _currentQuestionIndex;
   int get remainingTime => _remainingTime;
   bool get isCountdownEnabled => _countdownEnabled;
+  String get ageGroup => selectedAgeGroup;
+
   Question get currentQuestion => _questions.isNotEmpty
       ? _questions[_currentQuestionIndex]
       : Question(questionText: "", options: [], correctIndex: 0, category: "");
 
-  void startQuiz(String category, bool enableCountdown) {
+  // 🔥 Atualizado para aceitar a faixa etária
+  void startQuiz(String category, bool enableCountdown, String ageGroup) {
     _countdownEnabled = enableCountdown;
     _questions = _questionsByCategory[category] ?? [];
     _currentQuestionIndex = 0;
     correctAnswers = 0;
     wrongAnswers = 0;
+    selectedAgeGroup = ageGroup; // 🔥 Armazena a faixa etária do usuário
     _stopwatch.reset();
     _stopwatch.start();
 

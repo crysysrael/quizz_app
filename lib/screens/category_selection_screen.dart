@@ -14,8 +14,17 @@ class CategorySelectionScreen extends StatefulWidget {
 class _CategorySelectionScreenState extends State<CategorySelectionScreen>
     with SingleTickerProviderStateMixin {
   bool isCountdownEnabled = false;
+  String selectedAgeGroup = "13 - 17 anos"; // 🔥 Definição padrão
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+
+  final List<String> ageGroups = [
+    "Menos de 12 anos",
+    "13 - 17 anos",
+    "18 - 29 anos",
+    "Mais de 30 anos"
+  ];
 
   @override
   void initState() {
@@ -56,6 +65,36 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // 🔥 Seletor de faixa etária
+              const Text(
+                "Selecione sua faixa etária:",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                value: selectedAgeGroup,
+                items: ageGroups.map((String group) {
+                  return DropdownMenuItem<String>(
+                    value: group,
+                    child: Text(group),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    selectedAgeGroup = newValue!;
+                  });
+                },
+                decoration: InputDecoration(
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
               // 🔥 Alternar contagem regressiva
               SwitchListTile(
                 title: const Text(
@@ -83,7 +122,11 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
 
                     return GestureDetector(
                       onTap: () {
-                        quizController.startQuiz(category, isCountdownEnabled);
+                        quizController.startQuiz(
+                          category,
+                          isCountdownEnabled,
+                          selectedAgeGroup, // 🔥 Passa a faixa etária correta
+                        );
                         Navigator.push(
                           context,
                           PageRouteBuilder(
