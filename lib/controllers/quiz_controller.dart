@@ -1,70 +1,28 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../models/question_model.dart';
 import '../screens/result_screen.dart';
-import '../main.dart'; // 🔥 Importa a chave global de navegação
+import '../main.dart';
 
 class QuizController extends ChangeNotifier {
   int _currentQuestionIndex = 0;
   int correctAnswers = 0;
   int wrongAnswers = 0;
-  String selectedAgeGroup = ""; // 🔥 Adiciona faixa etária do usuário
+  String selectedAgeGroup = "";
   final Stopwatch _stopwatch = Stopwatch();
   Timer? _countdownTimer;
   int _remainingTime = 10;
   bool _countdownEnabled = false;
 
-  final AudioPlayer _audioPlayer = AudioPlayer(); // 🎵 Para tocar os sons
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  final Map<String, List<Question>> _questionsByCategory = {
-    "Introdução ao Scratch": [
-      Question(
-        questionText: "O que é o Scratch?",
-        options: [
-          "Um editor de texto",
-          "Uma linguagem de programação visual",
-          "Um navegador",
-          "Uma rede social"
-        ],
-        correctIndex: 1,
-        category: "Introdução ao Scratch",
-      ),
-      Question(
-        questionText: "Quem criou o Scratch?",
-        options: ["Microsoft", "Google", "MIT Media Lab", "Apple"],
-        correctIndex: 2,
-        category: "Introdução ao Scratch",
-      ),
-    ],
-    "Blocos de Código": [
-      Question(
-        questionText: "Qual desses blocos inicia um programa no Scratch?",
-        imageOptions: [
-          "assets/images/bloco_movimento.png",
-          "assets/images/bloco_inicio.png",
-          "assets/images/bloco_repetir.png",
-          "assets/images/bloco_som.png",
-        ],
-        correctIndex: 1,
-        category: "Blocos de Código",
-      ),
-      Question(
-        questionText: "Qual desses blocos é usado para repetir ações?",
-        imageOptions: [
-          "assets/images/bloco_movimento.png",
-          "assets/images/bloco_inicio.png",
-          "assets/images/bloco_repetir.png",
-          "assets/images/bloco_som.png",
-        ],
-        correctIndex: 2,
-        category: "Blocos de Código",
-      ),
-    ],
-  };
-
+  Map<String, List<Question>> _questionsByCategory = {};
   List<Question> _questions = [];
 
+  // 🔥 Getters
   Map<String, List<Question>> get questionsByCategory => _questionsByCategory;
   List<Question> get questions => _questions;
   int get currentQuestionIndex => _currentQuestionIndex;
@@ -74,16 +32,49 @@ class QuizController extends ChangeNotifier {
 
   Question get currentQuestion => _questions.isNotEmpty
       ? _questions[_currentQuestionIndex]
-      : Question(questionText: "", options: [], correctIndex: 0, category: "");
+      : Question(
+          id: "",
+          questionText: "",
+          options: [],
+          correctIndex: 0,
+          category: "",
+          difficultyLevel: "");
 
-  // 🔥 Atualizado para aceitar a faixa etária
-  void startQuiz(String category, bool enableCountdown, String ageGroup) {
+  // 🔥 Busca perguntas do Firestore
+  Future<void> fetchQuestionsFromFirestore() async {
+    try {
+      final querySnapshot = await _firestore.collection('questions').get();
+      Map<String, List<Question>> tempQuestionsByCategory = {};
+
+      for (var doc in querySnapshot.docs) {
+        Question question = Question.fromMap(doc.data(), doc.id);
+        if (!tempQuestionsByCategory.containsKey(question.category)) {
+          tempQuestionsByCategory[question.category] = [];
+        }
+        tempQuestionsByCategory[question.category]!.add(question);
+      }
+
+      _questionsByCategory = tempQuestionsByCategory;
+      notifyListeners();
+    } catch (e) {
+      print("Erro ao carregar perguntas do Firestore: $e");
+    }
+  }
+
+  // 🔥 Inicia o quiz carregando perguntas do Firebase
+  Future<void> startQuiz(
+      String category, bool enableCountdown, String ageGroup) async {
     _countdownEnabled = enableCountdown;
+    selectedAgeGroup = ageGroup;
+
+    if (_questionsByCategory.isEmpty) {
+      await fetchQuestionsFromFirestore();
+    }
+
     _questions = _questionsByCategory[category] ?? [];
     _currentQuestionIndex = 0;
     correctAnswers = 0;
     wrongAnswers = 0;
-    selectedAgeGroup = ageGroup; // 🔥 Armazena a faixa etária do usuário
     _stopwatch.reset();
     _stopwatch.start();
 
@@ -94,6 +85,7 @@ class QuizController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ⏳ Inicia a contagem regressiva
   void _startCountdown() {
     _remainingTime = 10;
     _countdownTimer?.cancel();
@@ -108,10 +100,10 @@ class QuizController extends ChangeNotifier {
     });
   }
 
+  // 🚨 Se o tempo acabar, conta como erro
   void _handleTimeout() async {
     wrongAnswers++;
-    await _playSound(
-        "sounds/wrong.mp3"); // 🎵 Toca som de erro ao zerar o tempo
+    await _playSound("sounds/wrong.mp3");
 
     if (_currentQuestionIndex < _questions.length - 1) {
       _currentQuestionIndex++;
@@ -120,11 +112,13 @@ class QuizController extends ChangeNotifier {
     } else {
       _stopwatch.stop();
       _countdownTimer?.cancel();
+      await _saveResultToFirestore();
       _goToResultScreen();
     }
     notifyListeners();
   }
 
+  // ✅ Responde a pergunta
   void answerQuestion(int selectedIndex, BuildContext context) async {
     _stopwatch.stop();
     _countdownTimer?.cancel();
@@ -134,7 +128,6 @@ class QuizController extends ChangeNotifier {
       _questions[_currentQuestionIndex].timeSpent = timeTaken;
     }
 
-    // 🎵 Toca o som de acerto ou erro
     if (selectedIndex == _questions[_currentQuestionIndex].correctIndex) {
       correctAnswers++;
       await _playSound("sounds/correct.mp3");
@@ -150,12 +143,29 @@ class QuizController extends ChangeNotifier {
       if (_countdownEnabled) _startCountdown();
     } else {
       _stopwatch.stop();
+      await _saveResultToFirestore();
       _goToResultScreen();
     }
 
     notifyListeners();
   }
 
+  // 🔥 Salva os resultados no Firestore
+  Future<void> _saveResultToFirestore() async {
+    try {
+      await _firestore.collection('quiz_results').add({
+        'ageGroup': selectedAgeGroup,
+        'correctAnswers': correctAnswers,
+        'wrongAnswers': wrongAnswers,
+        'totalQuestions': _questions.length,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print("Erro ao salvar resultado no Firestore: $e");
+    }
+  }
+
+  // 🎵 Reproduz som
   Future<void> _playSound(String path) async {
     try {
       await _audioPlayer.play(AssetSource(path));
@@ -164,6 +174,7 @@ class QuizController extends ChangeNotifier {
     }
   }
 
+  // 🔄 Redireciona para a tela de resultados
   void _goToResultScreen() {
     navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) =>
@@ -189,6 +200,7 @@ class QuizController extends ChangeNotifier {
     ));
   }
 
+  // 🔄 Reinicia o quiz
   void resetQuiz() {
     _currentQuestionIndex = 0;
     correctAnswers = 0;

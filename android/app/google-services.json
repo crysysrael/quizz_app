@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "63796799411",
+    "project_id": "logicamentee-quizz-5daff",
+    "storage_bucket": "logicamentee-quizz-5daff.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:63796799411:android:8a2f84dfef7656ee6c8dc6",
+        "android_client_info": {
+          "package_name": "com.logicamente.quizzapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCswcNhfAyNSI7hU547XNND8YpmBJwbdJc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -85,9 +85,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
                   const SizedBox(height: 20),
 
-                  // 🔥 Nome do App
+                  // 🔥 Nome do App atualizado corretamente
                   const Text(
-                    'LÓGICA MENTEE',
+                    'LOGICAMENTEE',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,

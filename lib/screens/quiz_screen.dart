@@ -16,6 +16,7 @@ class _QuizScreenState extends State<QuizScreen>
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   final AudioPlayer _audioPlayer = AudioPlayer();
+  bool isLoading = true; // 🔥 Indica se as perguntas estão sendo carregadas
 
   @override
   void initState() {
@@ -28,6 +29,15 @@ class _QuizScreenState extends State<QuizScreen>
     );
     _scaleAnimation =
         CurvedAnimation(parent: _animationController, curve: Curves.easeInOut);
+
+    // 🔥 Busca as perguntas do Firebase antes de começar
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Provider.of<QuizController>(context, listen: false)
+          .fetchQuestionsFromFirestore();
+      setState(() {
+        isLoading = false;
+      });
+    });
   }
 
   @override
@@ -46,6 +56,14 @@ class _QuizScreenState extends State<QuizScreen>
   @override
   Widget build(BuildContext context) {
     final quizController = Provider.of<QuizController>(context);
+
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFFF6AB3C)),
+        ),
+      );
+    }
 
     if (quizController.questions.isEmpty) {
       return const Scaffold(

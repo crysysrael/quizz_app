@@ -1,22 +1,38 @@
 name: quizz_app
-description: "A new Flutter project."
+description: "Aplicativo de Quiz sobre lógica e programação."
 publish_to: 'none'
 
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.6.2
+  sdk: ">=3.6.2 <4.0.0" # 📌 Mantendo compatível com sua versão do Flutter
 
 dependencies:
   flutter:
     sdk: flutter
-  share_plus: ^8.0.3  # 🔥 Adiciona o pacote para compartilhar resultados
 
-  cupertino_icons: ^1.0.8
-  path_provider: ^2.1.5
+  # 🔥 Firebase Dependencies
+  firebase_core: ^2.24.2
+  cloud_firestore: ^4.15.3
+  firebase_auth: ^4.16.0  # (opcional, pode remover se não for usar login)
+
+  # 📢 Compartilhamento de resultados
+  share_plus: ^8.0.3
+
+  # 🏗️ Gerenciamento de estado
   provider: ^6.1.2
+
+  # 📊 Gráficos para análise dos resultados
   syncfusion_flutter_charts: ^28.2.5+1
+
+  # 📂 Manipulação de arquivos
+  path_provider: ^2.1.5
+
+  # 🔊 Áudio para feedback sonoro
   audioplayers: ^6.1.2
+
+  # 🎨 Ícones adicionais
+  cupertino_icons: ^1.0.8
 
 dev_dependencies:
   flutter_test:
@@ -26,8 +42,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # 🔥 Adicionando imagens dos blocos do Scratch
+  # 📌 Recursos do App (imagens e sons)
   assets:
+    - assets/images/
     - assets/images/bloco_inicio.png
     - assets/images/bloco_repetir.png
     - assets/images/bloco_movimento.png
@@ -38,5 +55,6 @@ flutter:
     - assets/images/puzzle_4.png
     - assets/images/puzzle_5.png
     - assets/images/scratch_logo.png
+    - assets/sounds/
     - assets/sounds/correct.mp3
     - assets/sounds/wrong.mp3

@@ -1,44 +1,58 @@
 plugins {
-    id "com.android.application"
-    id "kotlin-android"
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
-    id "dev.flutter.flutter-gradle-plugin"
+    id("com.android.application")
+    id("kotlin-android")
+    id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services") // 🔥 Plugin do Firebase
 }
 
 android {
-    namespace = "com.example.quizz_app"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    namespace = "com.logicamente.quizzapp"
+    compileSdk 34  // 🔥 Garante compatibilidade com a versão mais recente
+    ndkVersion "28.0.13004108"  // 🔥 Garante que a versão do NDK é a correta
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
+        jvmTarget = "17"
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.quizz_app"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        applicationId "com.logicamente.quizzapp"
+        minSdk 23  // 🔥 Atualizado para 23 para compatibilidade com Firebase Auth
+        targetSdk 34  // 🔥 Garante compatibilidade com API mais recente
+        versionCode 1
+        versionName "1.0.0"
+
+        multiDexEnabled true // 🔥 Evita problemas de multidex no Firebase
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            minifyEnabled true // 🔥 Ativando minimização de código
+            shrinkResources true // 🔥 Remove recursos não utilizados
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
+    }
+
+    lintOptions {
+        disable 'ResourceType' // 🔥 Evita warnings de recursos
     }
 }
 
 flutter {
-    source = "../.."
+    source "../.."
 }
+
+dependencies {
+    implementation platform("com.google.firebase:firebase-bom:33.0.0") // 🔥 Sempre use a versão mais recente do BOM
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-analytics") // 🔥 Firebase Analytics
+    implementation("androidx.multidex:multidex:2.0.1") // 🔥 Evita problemas de multidex
+}
+
+// 🔥 Garante que o plugin do Firebase seja aplicado corretamente
+apply plugin: 'com.google.gms.google-services'

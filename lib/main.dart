@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'controllers/quiz_controller.dart';
 import 'screens/welcome_screen.dart';
 
 // 🔥 Definindo a chave global para navegação
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding
+      .ensureInitialized(); // 🔥 Garante inicialização correta do Flutter
+  await Firebase.initializeApp(); // 🔥 Inicializa Firebase antes de rodar o app
+
   runApp(
     MultiProvider(
       providers: [
@@ -25,7 +30,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       navigatorKey: navigatorKey, // 🔥 Adicionando a chave de navegação
       debugShowCheckedModeBanner: false,
-      title: 'Quiz App',
+      title: 'LOGICAMENTEE',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const WelcomeScreen(),
     );
