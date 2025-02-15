@@ -153,15 +153,24 @@ class QuizController extends ChangeNotifier {
   // 🔥 Salva os resultados no Firestore
   Future<void> _saveResultToFirestore() async {
     try {
+      // 🔥 Obtém um ID único para o usuário (futuro: usar autenticação)
+      String userId =
+          "user_${DateTime.now().millisecondsSinceEpoch}"; // 🔥 Temporário
+
       await _firestore.collection('quiz_results').add({
+        'userId': userId,
         'ageGroup': selectedAgeGroup,
         'correctAnswers': correctAnswers,
         'wrongAnswers': wrongAnswers,
         'totalQuestions': _questions.length,
-        'timestamp': FieldValue.serverTimestamp(),
+        'totalTime': _stopwatch.elapsed.inSeconds, // 🔥 Tempo total em segundos
+        'timestamp': FieldValue
+            .serverTimestamp(), // 🔥 Timestamp automático do Firestore
       });
+
+      print("✅ Resultado salvo com sucesso no Firestore!");
     } catch (e) {
-      print("Erro ao salvar resultado no Firestore: $e");
+      print("❌ Erro ao salvar resultado no Firestore: $e");
     }
   }
 
