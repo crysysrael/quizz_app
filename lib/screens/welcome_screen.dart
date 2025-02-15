@@ -13,6 +13,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   bool _isPressed = false;
+  bool _isNavigating = false; // 🔥 Evita navegação múltipla
 
   @override
   void initState() {
@@ -34,6 +35,37 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     super.dispose();
   }
 
+  void _navigateToCategorySelection() {
+    if (_isNavigating) return; // 🔥 Impede múltiplas navegações
+    _isNavigating = true;
+
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const CategorySelectionScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(0.0, 1.0);
+          const end = Offset.zero;
+          const curve = Curves.easeInOut;
+          var tween =
+              Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: FadeTransition(
+              opacity: animation,
+              child: child,
+            ),
+          );
+        },
+      ),
+    ).then((_) {
+      // 🔥 Permite navegação novamente após retorno
+      _isNavigating = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,29 +79,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             },
             onTapUp: (_) {
               setState(() => _isPressed = false);
-              Navigator.push(
-                context,
-                PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) =>
-                      const CategorySelectionScreen(),
-                  transitionsBuilder:
-                      (context, animation, secondaryAnimation, child) {
-                    const begin = Offset(0.0, 1.0);
-                    const end = Offset.zero;
-                    const curve = Curves.easeInOut;
-                    var tween = Tween(begin: begin, end: end)
-                        .chain(CurveTween(curve: curve));
-
-                    return SlideTransition(
-                      position: animation.drive(tween),
-                      child: FadeTransition(
-                        opacity: animation,
-                        child: child,
-                      ),
-                    );
-                  },
-                ),
-              );
+              _navigateToCategorySelection();
             },
             child: AnimatedScale(
               scale: _isPressed ? 0.95 : 1.0, // 🔥 Efeito de clique
@@ -77,10 +87,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // 🔥 Logo do Quiz - Agora maior (150 de altura)
+                  // 🔥 Logo do Quiz - Certifique-se de que o caminho está correto
                   Image.asset(
                     'assets/images/scratch_logo.png',
                     height: 150,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Text(
+                        "Erro ao carregar logo!",
+                        style: TextStyle(color: Colors.white),
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 20),

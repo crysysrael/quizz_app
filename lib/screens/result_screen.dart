@@ -17,8 +17,8 @@ class _ResultScreenState extends State<ResultScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  String mostSkilledAgeGroup = "Carregando...";
-  String leastSkilledAgeGroup = "Carregando...";
+  String mostSkilledAgeGroup = "Indefinido";
+  String leastSkilledAgeGroup = "Indefinido";
   bool isLoading = true; // 🔥 Indicador de carregamento
 
   @override
@@ -45,6 +45,13 @@ class _ResultScreenState extends State<ResultScreen>
     try {
       FirebaseFirestore firestore = FirebaseFirestore.instance;
       QuerySnapshot snapshot = await firestore.collection('quiz_results').get();
+
+      if (snapshot.docs.isEmpty) {
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
 
       Map<String, int> ageGroupScores = {};
       Map<String, int> ageGroupCounts = {};
@@ -165,30 +172,40 @@ class _ResultScreenState extends State<ResultScreen>
                 style: TextStyle(fontSize: screenWidth * 0.04),
               ),
               const SizedBox(height: 20),
-              SizedBox(
-                height: screenHeight * 0.3,
-                child: SfCartesianChart(
-                  primaryXAxis: CategoryAxis(),
-                  primaryYAxis:
-                      NumericAxis(title: AxisTitle(text: "Tempo (s)")),
-                  series: <CartesianSeries>[
-                    ColumnSeries<Map<String, dynamic>, String>(
-                      dataSource: List.generate(
-                        quizController.questions.length,
-                        (index) => {
-                          "question": index.toString(),
-                          "time":
-                              (quizController.questions[index].timeSpent ?? 0) /
-                                  1000,
-                        },
+
+              // 🔥 Gráfico de tempo por pergunta (só exibe se houver dados)
+              if (timePerQuestion.any((time) => time > 0))
+                SizedBox(
+                  height: screenHeight * 0.3,
+                  child: SfCartesianChart(
+                    primaryXAxis: CategoryAxis(),
+                    primaryYAxis:
+                        NumericAxis(title: AxisTitle(text: "Tempo (s)")),
+                    series: <CartesianSeries>[
+                      ColumnSeries<Map<String, dynamic>, String>(
+                        dataSource: List.generate(
+                          quizController.questions.length,
+                          (index) => {
+                            "question": index.toString(),
+                            "time":
+                                (quizController.questions[index].timeSpent ??
+                                        0) /
+                                    1000,
+                          },
+                        ),
+                        xValueMapper: (data, _) => data["question"],
+                        yValueMapper: (data, _) => data["time"],
+                        color: Colors.orange,
                       ),
-                      xValueMapper: (data, _) => data["question"],
-                      yValueMapper: (data, _) => data["time"],
-                      color: Colors.orange,
-                    ),
-                  ],
+                    ],
+                  ),
+                )
+              else
+                const Text(
+                  "Nenhum dado de tempo disponível para exibir no gráfico.",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-              ),
+
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {

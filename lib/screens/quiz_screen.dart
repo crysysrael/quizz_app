@@ -30,10 +30,13 @@ class _QuizScreenState extends State<QuizScreen>
     _scaleAnimation =
         CurvedAnimation(parent: _animationController, curve: Curves.easeInOut);
 
-    // 🔥 Busca as perguntas do Firebase antes de começar
+    // 🔥 Verifica se as perguntas já foram carregadas antes de buscar no Firebase
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await Provider.of<QuizController>(context, listen: false)
-          .fetchQuestionsFromFirestore();
+      final quizController =
+          Provider.of<QuizController>(context, listen: false);
+      if (quizController.questions.isEmpty) {
+        await quizController.fetchQuestionsFromFirestore();
+      }
       setState(() {
         isLoading = false;
       });
@@ -47,10 +50,14 @@ class _QuizScreenState extends State<QuizScreen>
     super.dispose();
   }
 
-  void _playSound(bool isCorrect) {
-    String soundPath =
-        isCorrect ? "assets/sounds/correct.mp3" : "assets/sounds/wrong.mp3";
-    _audioPlayer.play(AssetSource(soundPath));
+  Future<void> _playSound(bool isCorrect) async {
+    try {
+      String soundPath =
+          isCorrect ? "assets/sounds/correct.mp3" : "assets/sounds/wrong.mp3";
+      await _audioPlayer.play(AssetSource(soundPath));
+    } catch (e) {
+      print("Erro ao reproduzir som: $e");
+    }
   }
 
   @override
@@ -156,110 +163,90 @@ class _QuizScreenState extends State<QuizScreen>
             if (question.imageOptions != null &&
                 question.imageOptions!.isNotEmpty)
               ...List.generate(question.imageOptions!.length, (index) {
-                bool isSelected = selectedAnswerIndex == index;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedAnswerIndex = index;
-                    });
-                    _playSound(index == question.correctIndex);
-                    _animationController.forward().then((_) {
-                      _animationController.reverse();
-                    });
-
-                    Future.delayed(const Duration(milliseconds: 500), () {
-                      quizController.answerQuestion(index, context);
-                      setState(() {
-                        selectedAnswerIndex = null;
-                      });
-                    });
-                  },
-                  child: ScaleTransition(
-                    scale: isSelected
-                        ? _scaleAnimation
-                        : AlwaysStoppedAnimation(1.0),
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: isSelected ? Colors.greenAccent : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 6,
-                            spreadRadius: 2,
-                          )
-                        ],
-                      ),
-                      child: Image.asset(
-                        question.imageOptions![index],
-                        height: 100,
-                      ),
-                    ),
-                  ),
+                return _buildOptionCard(
+                  index,
+                  isImage: true,
+                  imageUrl: question.imageOptions![index],
+                  quizController: quizController,
+                  correctIndex: question.correctIndex,
                 );
               })
             else if (question.options != null && question.options!.isNotEmpty)
               ...List.generate(question.options!.length, (index) {
-                bool isSelected = selectedAnswerIndex == index;
-                bool isCorrect = index == question.correctIndex;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedAnswerIndex = index;
-                    });
-                    _playSound(isCorrect);
-                    _animationController.forward().then((_) {
-                      _animationController.reverse();
-                    });
-
-                    Future.delayed(const Duration(milliseconds: 500), () {
-                      quizController.answerQuestion(index, context);
-                      setState(() {
-                        selectedAnswerIndex = null;
-                      });
-                    });
-                  },
-                  child: ScaleTransition(
-                    scale: isSelected
-                        ? _scaleAnimation
-                        : AlwaysStoppedAnimation(1.0),
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? (isCorrect ? Colors.green : Colors.redAccent)
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected
-                              ? (isCorrect ? Colors.green : Colors.red)
-                              : Colors.grey,
-                          width: 2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 6,
-                            spreadRadius: 2,
-                          )
-                        ],
-                      ),
-                      child: Text(
-                        question.options![index],
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
+                return _buildOptionCard(
+                  index,
+                  text: question.options![index],
+                  quizController: quizController,
+                  correctIndex: question.correctIndex,
                 );
               }),
 
             const Spacer(),
           ],
+        ),
+      ),
+    );
+  }
+
+  // 🔹 Função genérica para renderizar opções (texto ou imagem)
+  Widget _buildOptionCard(int index,
+      {String? text,
+      String? imageUrl,
+      required QuizController quizController,
+      required int correctIndex,
+      bool isImage = false}) {
+    bool isSelected = selectedAnswerIndex == index;
+    bool isCorrect = index == correctIndex;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedAnswerIndex = index;
+        });
+        _playSound(isCorrect);
+        _animationController.forward().then((_) {
+          _animationController.reverse();
+        });
+
+        Future.delayed(const Duration(milliseconds: 500), () {
+          quizController.answerQuestion(index, context);
+          setState(() {
+            selectedAnswerIndex = null;
+          });
+        });
+      },
+      child: ScaleTransition(
+        scale: isSelected ? _scaleAnimation : AlwaysStoppedAnimation(1.0),
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? (isCorrect ? Colors.green : Colors.redAccent)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? (isCorrect ? Colors.green : Colors.red)
+                  : Colors.grey,
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 6,
+                spreadRadius: 2,
+              )
+            ],
+          ),
+          child: isImage
+              ? Image.asset(imageUrl!, height: 100)
+              : Text(
+                  text!,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
         ),
       ),
     );

@@ -40,11 +40,14 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
 
     // 🔥 Buscar categorias do Firebase antes de exibir a tela
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await Provider.of<QuizController>(context, listen: false)
-          .fetchQuestionsFromFirestore();
-      setState(() {
-        isLoading = false;
-      });
+      var quizController = Provider.of<QuizController>(context, listen: false);
+      await quizController.fetchQuestionsFromFirestore();
+
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     });
   }
 
@@ -97,9 +100,11 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
                         );
                       }).toList(),
                       onChanged: (newValue) {
-                        setState(() {
-                          selectedAgeGroup = newValue!;
-                        });
+                        if (newValue != null) {
+                          setState(() {
+                            selectedAgeGroup = newValue;
+                          });
+                        }
                       },
                       decoration: InputDecoration(
                         contentPadding: const EdgeInsets.symmetric(
@@ -155,27 +160,9 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
                                     );
                                     Navigator.push(
                                       context,
-                                      PageRouteBuilder(
-                                        pageBuilder: (context, animation,
-                                                secondaryAnimation) =>
+                                      MaterialPageRoute(
+                                        builder: (context) =>
                                             const QuizScreen(),
-                                        transitionsBuilder: (context, animation,
-                                            secondaryAnimation, child) {
-                                          const begin = Offset(1.0, 0.0);
-                                          const end = Offset.zero;
-                                          const curve = Curves.easeInOut;
-                                          var tween = Tween(
-                                                  begin: begin, end: end)
-                                              .chain(CurveTween(curve: curve));
-
-                                          return SlideTransition(
-                                            position: animation.drive(tween),
-                                            child: FadeTransition(
-                                              opacity: animation,
-                                              child: child,
-                                            ),
-                                          );
-                                        },
                                       ),
                                     );
                                   },

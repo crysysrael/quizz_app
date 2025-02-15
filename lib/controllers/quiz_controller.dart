@@ -36,9 +36,11 @@ class QuizController extends ChangeNotifier {
           id: "",
           questionText: "",
           options: [],
+          imageOptions: [], // 🔥 Agora sempre inicializado
           correctIndex: 0,
           category: "",
-          difficultyLevel: "");
+          difficultyLevel: "Médio", // 🔥 Valor padrão
+        );
 
   // 🔥 Busca perguntas do Firestore
   Future<void> fetchQuestionsFromFirestore() async {
@@ -184,56 +186,6 @@ class QuizController extends ChangeNotifier {
     }
 
     notifyListeners();
-  }
-
-  // 🔥 Busca estatísticas gerais dos quizzes no Firestore
-  Future<Map<String, dynamic>> fetchQuizStatistics() async {
-    try {
-      QuerySnapshot snapshot =
-          await _firestore.collection('quiz_results').get();
-
-      int totalQuizzes = snapshot.docs.length;
-      Map<String, int> correctAnswersByAge = {};
-      Map<String, int> totalAttemptsByAge = {};
-      int longestTime = 0;
-      int shortestTime = 9999999;
-      int totalTime = 0;
-
-      for (var doc in snapshot.docs) {
-        var data = doc.data() as Map<String, dynamic>;
-
-        String ageGroup = data['ageGroup'];
-        int correctAnswers = data['correctAnswers'];
-        int totalQuestions = data['totalQuestions'];
-        int quizTime = data['totalTime'];
-
-        if (!correctAnswersByAge.containsKey(ageGroup)) {
-          correctAnswersByAge[ageGroup] = 0;
-          totalAttemptsByAge[ageGroup] = 0;
-        }
-
-        correctAnswersByAge[ageGroup] =
-            (correctAnswersByAge[ageGroup] ?? 0) + correctAnswers;
-        totalAttemptsByAge[ageGroup] =
-            (totalAttemptsByAge[ageGroup] ?? 0) + totalQuestions;
-
-        if (quizTime > longestTime) longestTime = quizTime;
-        if (quizTime < shortestTime) shortestTime = quizTime;
-        totalTime += quizTime;
-      }
-
-      return {
-        "totalQuizzes": totalQuizzes,
-        "correctAnswersByAge": correctAnswersByAge,
-        "totalAttemptsByAge": totalAttemptsByAge,
-        "longestTime": longestTime,
-        "shortestTime": shortestTime,
-        "averageTime": totalQuizzes > 0 ? totalTime ~/ totalQuizzes : 0,
-      };
-    } catch (e) {
-      print("Erro ao buscar estatísticas: $e");
-      return {};
-    }
   }
 
   // 🎵 Reproduz som

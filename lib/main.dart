@@ -10,7 +10,13 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding
       .ensureInitialized(); // 🔥 Garante inicialização correta do Flutter
-  await Firebase.initializeApp(); // 🔥 Inicializa Firebase antes de rodar o app
+
+  try {
+    await Firebase
+        .initializeApp(); // 🔥 Inicializa Firebase antes de rodar o app
+  } catch (e) {
+    print("❌ Erro ao inicializar o Firebase: $e");
+  }
 
   runApp(
     MultiProvider(
@@ -31,7 +37,11 @@ class MyApp extends StatelessWidget {
       navigatorKey: navigatorKey, // 🔥 Adicionando a chave de navegação
       debugShowCheckedModeBanner: false,
       title: 'LOGICAMENTEE',
-      theme: ThemeData(primarySwatch: Colors.blue),
+      theme: ThemeData(
+        primarySwatch: Colors.orange, // 🔥 Alterado para manter o padrão visual
+        scaffoldBackgroundColor:
+            Colors.white, // 🔥 Fundo branco para melhor contraste
+      ),
       home: const WelcomeScreen(),
     );
   }
