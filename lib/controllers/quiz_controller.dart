@@ -153,9 +153,7 @@ class QuizController extends ChangeNotifier {
   // 🔥 Salva os resultados no Firestore
   Future<void> _saveResultToFirestore() async {
     try {
-      // 🔥 Obtém um ID único para o usuário (futuro: usar autenticação)
-      String userId =
-          "user_${DateTime.now().millisecondsSinceEpoch}"; // 🔥 Temporário
+      String userId = "user_${DateTime.now().millisecondsSinceEpoch}";
 
       await _firestore.collection('quiz_results').add({
         'userId': userId,
@@ -163,14 +161,78 @@ class QuizController extends ChangeNotifier {
         'correctAnswers': correctAnswers,
         'wrongAnswers': wrongAnswers,
         'totalQuestions': _questions.length,
-        'totalTime': _stopwatch.elapsed.inSeconds, // 🔥 Tempo total em segundos
-        'timestamp': FieldValue
-            .serverTimestamp(), // 🔥 Timestamp automático do Firestore
+        'totalTime': _stopwatch.elapsed.inSeconds,
+        'timestamp': FieldValue.serverTimestamp(),
       });
 
       print("✅ Resultado salvo com sucesso no Firestore!");
     } catch (e) {
       print("❌ Erro ao salvar resultado no Firestore: $e");
+    }
+  }
+
+  // 🔄 Reinicia o quiz (Corrigido para evitar erro no `result_screen.dart`)
+  void resetQuiz() {
+    _currentQuestionIndex = 0;
+    correctAnswers = 0;
+    wrongAnswers = 0;
+    _countdownTimer?.cancel();
+    _stopwatch.reset();
+
+    for (var question in _questions) {
+      question.timeSpent = null;
+    }
+
+    notifyListeners();
+  }
+
+  // 🔥 Busca estatísticas gerais dos quizzes no Firestore
+  Future<Map<String, dynamic>> fetchQuizStatistics() async {
+    try {
+      QuerySnapshot snapshot =
+          await _firestore.collection('quiz_results').get();
+
+      int totalQuizzes = snapshot.docs.length;
+      Map<String, int> correctAnswersByAge = {};
+      Map<String, int> totalAttemptsByAge = {};
+      int longestTime = 0;
+      int shortestTime = 9999999;
+      int totalTime = 0;
+
+      for (var doc in snapshot.docs) {
+        var data = doc.data() as Map<String, dynamic>;
+
+        String ageGroup = data['ageGroup'];
+        int correctAnswers = data['correctAnswers'];
+        int totalQuestions = data['totalQuestions'];
+        int quizTime = data['totalTime'];
+
+        if (!correctAnswersByAge.containsKey(ageGroup)) {
+          correctAnswersByAge[ageGroup] = 0;
+          totalAttemptsByAge[ageGroup] = 0;
+        }
+
+        correctAnswersByAge[ageGroup] =
+            (correctAnswersByAge[ageGroup] ?? 0) + correctAnswers;
+        totalAttemptsByAge[ageGroup] =
+            (totalAttemptsByAge[ageGroup] ?? 0) + totalQuestions;
+
+        if (quizTime > longestTime) longestTime = quizTime;
+        if (quizTime < shortestTime) shortestTime = quizTime;
+        totalTime += quizTime;
+      }
+
+      return {
+        "totalQuizzes": totalQuizzes,
+        "correctAnswersByAge": correctAnswersByAge,
+        "totalAttemptsByAge": totalAttemptsByAge,
+        "longestTime": longestTime,
+        "shortestTime": shortestTime,
+        "averageTime": totalQuizzes > 0 ? totalTime ~/ totalQuizzes : 0,
+      };
+    } catch (e) {
+      print("Erro ao buscar estatísticas: $e");
+      return {};
     }
   }
 
@@ -185,39 +247,8 @@ class QuizController extends ChangeNotifier {
 
   // 🔄 Redireciona para a tela de resultados
   void _goToResultScreen() {
-    navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
-      pageBuilder: (context, animation, secondaryAnimation) =>
-          ResultScreen(quizController: this),
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        const begin = Offset(0.0, 1.0);
-        const end = Offset.zero;
-        const curve = Curves.easeInOut;
-
-        var tween =
-            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-        var fadeTween =
-            Tween<double>(begin: 0.0, end: 1.0).chain(CurveTween(curve: curve));
-
-        return FadeTransition(
-          opacity: animation.drive(fadeTween),
-          child: SlideTransition(
-            position: animation.drive(tween),
-            child: child,
-          ),
-        );
-      },
+    navigatorKey.currentState?.pushReplacement(MaterialPageRoute(
+      builder: (context) => ResultScreen(quizController: this),
     ));
-  }
-
-  // 🔄 Reinicia o quiz
-  void resetQuiz() {
-    _currentQuestionIndex = 0;
-    correctAnswers = 0;
-    wrongAnswers = 0;
-    _countdownTimer?.cancel();
-    for (var question in _questions) {
-      question.timeSpent = null;
-    }
-    notifyListeners();
   }
 }
