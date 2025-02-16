@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../controllers/auth_controller.dart';
+import 'login_screen.dart';
 import 'category_selection_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -13,7 +16,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   bool _isPressed = false;
-  bool _isNavigating = false; // 🔥 Evita navegação múltipla
+  bool _isNavigating = false;
 
   @override
   void initState() {
@@ -36,7 +39,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   }
 
   void _navigateToCategorySelection() {
-    if (_isNavigating) return; // 🔥 Impede múltiplas navegações
+    if (_isNavigating) return;
     _isNavigating = true;
 
     Navigator.push(
@@ -61,15 +64,32 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         },
       ),
     ).then((_) {
-      // 🔥 Permite navegação novamente após retorno
       _isNavigating = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final authController = Provider.of<AuthController>(context, listen: false);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6AB3C), // 🔥 Mantendo a paleta de cores
+      appBar: AppBar(
+        title: const Text("Bem-vindo ao LOGICAMENTEE"),
+        backgroundColor: Colors.orange,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await authController.signOut();
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
+            },
+          ),
+        ],
+      ),
+      backgroundColor: const Color(0xFFF6AB3C),
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: Center(
@@ -82,12 +102,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               _navigateToCategorySelection();
             },
             child: AnimatedScale(
-              scale: _isPressed ? 0.95 : 1.0, // 🔥 Efeito de clique
+              scale: _isPressed ? 0.95 : 1.0,
               duration: const Duration(milliseconds: 150),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // 🔥 Logo do Quiz - Certifique-se de que o caminho está correto
                   Image.asset(
                     'assets/images/scratch_logo.png',
                     height: 150,
@@ -98,10 +117,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       );
                     },
                   ),
-
                   const SizedBox(height: 20),
-
-                  // 🔥 Nome do App atualizado corretamente
                   const Text(
                     'LOGICAMENTEE',
                     style: TextStyle(

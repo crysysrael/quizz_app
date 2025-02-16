@@ -12,7 +12,20 @@
           "package_name": "com.logicamente.quizzapp"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "63796799411-b8bk8845u631cvsupkjfrmpd15o3ohug.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.logicamente.quizzapp",
+            "certificate_hash": "0bbbf105043e9b44b80443a741cfc0c8307a26d8"
+          }
+        },
+        {
+          "client_id": "63796799411-rp8uisg8fbo6s8jscbc2aflg4mm8mvgm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCswcNhfAyNSI7hU547XNND8YpmBJwbdJc"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "63796799411-rp8uisg8fbo6s8jscbc2aflg4mm8mvgm.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "63796799411-58ihdu1np6uq7srhhbah0n0chgj439jp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.quizzApp"
+              }
+            }
+          ]
         }
       }
     }

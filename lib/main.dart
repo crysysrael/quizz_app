@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'controllers/quiz_controller.dart';
+import 'controllers/auth_controller.dart';
 import 'screens/welcome_screen.dart';
+import 'screens/login_screen.dart';
 
 // 🔥 Definindo a chave global para navegação
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
-  WidgetsFlutterBinding
-      .ensureInitialized(); // 🔥 Garante inicialização correta do Flutter
+  WidgetsFlutterBinding.ensureInitialized();
 
   try {
     await Firebase
@@ -22,6 +24,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => QuizController()),
+        ChangeNotifierProvider(create: (_) => AuthController()), // 🔥 Corrigido
       ],
       child: const MyApp(),
     ),
@@ -34,15 +37,34 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      navigatorKey: navigatorKey, // 🔥 Adicionando a chave de navegação
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'LOGICAMENTEE',
       theme: ThemeData(
-        primarySwatch: Colors.orange, // 🔥 Alterado para manter o padrão visual
-        scaffoldBackgroundColor:
-            Colors.white, // 🔥 Fundo branco para melhor contraste
+        primarySwatch: Colors.orange,
+        scaffoldBackgroundColor: Colors.white,
       ),
-      home: const WelcomeScreen(),
+      home: _buildInitialScreen(),
+    );
+  }
+
+  // 🔥 Define a tela inicial com base no status do login
+  Widget _buildInitialScreen() {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance
+          .authStateChanges(), // 🔥 Mantém a autenticação em tempo real
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(
+                child:
+                    CircularProgressIndicator()), // 🔄 Tela de carregamento enquanto verifica login
+          );
+        }
+
+        final User? user = snapshot.data;
+        return user == null ? const LoginScreen() : const WelcomeScreen();
+      },
     );
   }
 }
